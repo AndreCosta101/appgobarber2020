@@ -6,18 +6,27 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 import { Form } from '@unform/mobile';
 import { FormHandles } from '@unform/core';
+import * as Yup from 'yup';
 
+import getValidationErrors from '../../utils/getValidationErrors';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 
 import logoImg from '../../assets/logo.png';
 
 import { Container, Title, BackToSignIn, BackToSignInText } from './styles';
+
+interface SignUpFormData {
+  name: string;
+  email: string;
+  password: string;
+}
 
 const SignUp: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
@@ -27,8 +36,55 @@ const SignUp: React.FC = () => {
   const passwordInputRef = useRef<TextInput>(null);
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  const handleSignIn = useCallback((data: object) => {
-    console.log(data);
+  const handleSignUp = useCallback(async (data: SignUpFormData) => {
+    try {
+      // zerar os erros, para a mensagem de erro sumir ao gravar pela segunda vez.
+      formRef.current?.setErrors({});
+
+      const schema = Yup.object().shape({
+        name: Yup.string().required('Nome obrigatório'),
+        email: Yup.string()
+          .required('Email obrigatório')
+          .email('Digite um email válido'),
+        password: Yup.string().min(6, 'No mínimo 6 digitos'),
+      });
+
+      /*
+       * o Yup tem como padrão retornar apenas o ultimo erro que encontra.
+       * o abortEarly: false faz ele retornar todos os erros.
+       */
+      await schema.validate(data, {
+        abortEarly: false,
+      });
+
+      // // se tudo deu certo, cadastra o user através da api
+      // await api.post('/users', data);
+      // // agora manda para a página de login
+      // history.push('/');
+      // dispara um alert
+
+      Alert.alert(
+        'Cadastro realizado!',
+        'Você já pode fazer seu logon no GoBarber',
+      );
+      //
+    } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        const errors = getValidationErrors(err);
+
+        formRef.current?.setErrors(errors);
+
+        // se vc clicar em entrar sem colocar nenhuma info,
+        // ele dispara o toast de baixo. Pra evitar isso,
+        // dá um return
+        return;
+      }
+
+      Alert.alert(
+        'Erro no cadastro',
+        'Ocorreu um erro ao fazer seu cadastro, tente novamente.',
+      );
+    }
   }, []);
 
   return (
@@ -48,7 +104,7 @@ const SignUp: React.FC = () => {
             <View>
               <Title>Crie Sua Conta</Title>
             </View>
-            <Form ref={formRef} onSubmit={handleSignIn}>
+            <Form ref={formRef} onSubmit={handleSignUp}>
               <Input
                 autoCorrect={false}
                 autoCapitalize="words"

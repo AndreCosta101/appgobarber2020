@@ -6,12 +6,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 
 import { Form } from '@unform/mobile';
 import { FormHandles } from '@unform/core';
+import * as Yup from 'yup';
+import getValidationErrors from '../../utils/getValidationErrors';
 
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -27,14 +30,61 @@ import {
   CreateAccountButtonText,
 } from './styles';
 
+interface SignInFormData {
+  email: string;
+  password: string;
+}
+
 const SignIn: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const navigation = useNavigation();
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  const handleSignIn = useCallback((data: object) => {
-    console.log(data);
+  const handleSignIn = useCallback(async (data: SignInFormData) => {
+    try {
+      // zerar os erros, para a mensagem de erro sumir ao gravar pela segunda vez.
+      formRef.current?.setErrors({});
+
+      const schema = Yup.object().shape({
+        email: Yup.string()
+          .required('Email obrigatório')
+          .email('Digite um email válido'),
+        password: Yup.string().required('Senha obrigatória'),
+      });
+
+      /*
+       * o Yup tem como padrão retornar apenas o ultimo erro que encontra.
+       * o abortEarly: false faz ele retornar todos os erros.
+       */
+      await schema.validate(data, {
+        abortEarly: false,
+      });
+
+      // passada a validação, vem a função signIn
+      // await signIn({
+      //   email: data.email,
+      //   password: data.password,
+      // });
+
+      // desnecessário. O Route.tsx já manda pro Dashboard
+      // history.push('/dashboard');
+    } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        const errors = getValidationErrors(err);
+
+        formRef.current?.setErrors(errors);
+
+        // se vc clicar em entrar sem colocar nenhuma info,
+        // ele dispara o toast de baixo. Pra evitar isso,
+        // dá um return
+        return;
+      }
+      Alert.alert(
+        'Erro na autenticação',
+        'Ocorreu um erro ao fazer login, cheque as credenciais.',
+      );
+    }
   }, []);
 
   return (
