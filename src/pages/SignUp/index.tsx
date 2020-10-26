@@ -62,7 +62,6 @@ const SignUp: React.FC = () => {
 
         // // se tudo deu certo, cadastra o user através da api
         await api.post('/users', data);
-        console.log(data);
 
         // dispara um alert
 
