@@ -38,60 +38,63 @@ const SignUp: React.FC = () => {
   const passwordInputRef = useRef<TextInput>(null);
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  const handleSignUp = useCallback(async (data: SignUpFormData) => {
-    try {
-      // zerar os erros, para a mensagem de erro sumir ao gravar pela segunda vez.
-      formRef.current?.setErrors({});
+  const handleSignUp = useCallback(
+    async (data: SignUpFormData) => {
+      try {
+        // zerar os erros, para a mensagem de erro sumir ao gravar pela segunda vez.
+        formRef.current?.setErrors({});
 
-      const schema = Yup.object().shape({
-        name: Yup.string().required('Nome obrigatório'),
-        email: Yup.string()
-          .required('Email obrigatório')
-          .email('Digite um email válido'),
-        password: Yup.string().min(6, 'No mínimo 6 digitos'),
-      });
+        const schema = Yup.object().shape({
+          name: Yup.string().required('Nome obrigatório'),
+          email: Yup.string()
+            .required('Email obrigatório')
+            .email('Digite um email válido'),
+          password: Yup.string().min(6, 'No mínimo 6 digitos'),
+        });
 
-      /*
-       * o Yup tem como padrão retornar apenas o ultimo erro que encontra.
-       * o abortEarly: false faz ele retornar todos os erros.
-       */
-      await schema.validate(data, {
-        abortEarly: false,
-      });
+        /*
+         * o Yup tem como padrão retornar apenas o ultimo erro que encontra.
+         * o abortEarly: false faz ele retornar todos os erros.
+         */
+        await schema.validate(data, {
+          abortEarly: false,
+        });
 
-      // // se tudo deu certo, cadastra o user através da api
-      await api.post('/users', data);
-      console.log(data);
+        // // se tudo deu certo, cadastra o user através da api
+        await api.post('/users', data);
+        console.log(data);
 
-      // dispara um alert
+        // dispara um alert
 
-      Alert.alert(
-        'Cadastro realizado com sucesso!',
-        'Você já pode fazer seu logon no GoBarber',
-      );
+        Alert.alert(
+          'Cadastro realizado com sucesso!',
+          'Você já pode fazer seu logon no GoBarber',
+        );
 
-      // // agora manda para a página de login
-      navigation.navigate('SignIn');
+        // // agora manda para a página de login
+        navigation.navigate('SignIn');
 
-      //
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        const errors = getValidationErrors(err);
+        //
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          const errors = getValidationErrors(err);
 
-        formRef.current?.setErrors(errors);
+          formRef.current?.setErrors(errors);
 
-        // se vc clicar em entrar sem colocar nenhuma info,
-        // ele dispara o toast de baixo. Pra evitar isso,
-        // dá um return
-        return;
+          // se vc clicar em entrar sem colocar nenhuma info,
+          // ele dispara o toast de baixo. Pra evitar isso,
+          // dá um return
+          return;
+        }
+
+        Alert.alert(
+          'Erro no cadastro',
+          'Ocorreu um erro ao fazer seu cadastro, tente novamente.',
+        );
       }
-
-      Alert.alert(
-        'Erro no cadastro',
-        'Ocorreu um erro ao fazer seu cadastro, tente novamente.',
-      );
-    }
-  }, []);
+    },
+    [navigation],
+  );
 
   return (
     <>
