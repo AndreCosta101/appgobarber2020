@@ -44,52 +44,54 @@ const SignIn: React.FC = () => {
 
   const navigation = useNavigation();
 
-  const { signIn, user } = useAuth();
-  console.log(user);
+  const { signIn } = useAuth();
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  const handleSignIn = useCallback(async (data: SignInFormData) => {
-    try {
-      // zerar os erros, para a mensagem de erro sumir ao gravar pela segunda vez.
-      formRef.current?.setErrors({});
+  const handleSignIn = useCallback(
+    async (data: SignInFormData) => {
+      try {
+        // zerar os erros, para a mensagem de erro sumir ao gravar pela segunda vez.
+        formRef.current?.setErrors({});
 
-      const schema = Yup.object().shape({
-        email: Yup.string()
-          .required('Email obrigatório')
-          .email('Digite um email válido'),
-        password: Yup.string().required('Senha obrigatória'),
-      });
+        const schema = Yup.object().shape({
+          email: Yup.string()
+            .required('Email obrigatório')
+            .email('Digite um email válido'),
+          password: Yup.string().required('Senha obrigatória'),
+        });
 
-      /*
-       * o Yup tem como padrão retornar apenas o ultimo erro que encontra.
-       * o abortEarly: false faz ele retornar todos os erros.
-       */
-      await schema.validate(data, {
-        abortEarly: false,
-      });
+        /*
+         * o Yup tem como padrão retornar apenas o ultimo erro que encontra.
+         * o abortEarly: false faz ele retornar todos os erros.
+         */
+        await schema.validate(data, {
+          abortEarly: false,
+        });
 
-      // passada a validação, vem a função signIn
-      await signIn({
-        email: data.email,
-        password: data.password,
-      });
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        const errors = getValidationErrors(err);
+        // passada a validação, vem a função signIn
+        await signIn({
+          email: data.email,
+          password: data.password,
+        });
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          const errors = getValidationErrors(err);
 
-        formRef.current?.setErrors(errors);
+          formRef.current?.setErrors(errors);
 
-        // se vc clicar em entrar sem colocar nenhuma info,
-        // ele dispara o toast de baixo. Pra evitar isso,
-        // dá um return
-        return;
+          // se vc clicar em entrar sem colocar nenhuma info,
+          // ele dispara o toast de baixo. Pra evitar isso,
+          // dá um return
+          return;
+        }
+        Alert.alert(
+          'Erro na autenticação',
+          'Ocorreu um erro ao fazer login, cheque as credenciais.',
+        );
       }
-      Alert.alert(
-        'Erro na autenticação',
-        'Ocorreu um erro ao fazer login, cheque as credenciais.',
-      );
-    }
-  }, []);
+    },
+    [signIn],
+  );
 
   return (
     <>
